@@ -20,6 +20,11 @@ password=mypassword
 Code:
 
 ```go
+import (
+    "fmt"
+    "github.com/cuberat/go-ini/ini"
+)
+
 conf, err := ini.LoadFromFile("my/file/path.conf")
 fmt.Printf("%v\n", conf)
 ```
