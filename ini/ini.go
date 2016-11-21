@@ -31,6 +31,20 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 // OF THE POSSIBILITY OF SUCH DAMAGE.
 
+// Package ini provides INI file read functionality in Go.
+//
+// File:
+//     foo=bar
+//     [db]
+//     user=myuser
+//     password=mypassword
+//
+// Code:
+//     conf, err := ini.LoadFromFile("my/file/path.conf")
+//     fmt.Printf("%v\n", conf)
+//
+// Output:
+//     map[default:map[foo:bar] db:map[user:myuser password:mypassword]]
 package ini
 
 import (
@@ -45,21 +59,29 @@ type my_ini struct {
     foo string
 }
 
+// LoadFromFile parses and INI file, returning a map of sections,
+// where each section is another map.
 func LoadFromFile(filename string) (map[string]map[string]string, error) {
     o := new(my_ini)
     return o.load_from_file(filename)
 }
 
+// LoadFromReader is like LoadFromFile, except that it reads from
+// an io.Reader interface.
 func LoadFromReader(r io.Reader) (map[string]map[string]string, error) {
     o := new(my_ini)
     return o.load_from_reader(r)
 }
 
+// Like ReadFromFile, except that it parses a string containing the full
+// INI contents.
 func LoadFromString(buf string) (map[string]map[string]string, error) {
     o := new(my_ini)
     return o.load_from_reader(strings.NewReader(buf))
 }
 
+// Like LoadFromFile, except it flattens the data structure into a single map,
+// with section names prepended to field names, delimited by a period.
 func LoadFromFileFlat(filename string) (map[string]string, error) {
     o := new(my_ini)
 
@@ -72,6 +94,8 @@ func LoadFromFileFlat(filename string) (map[string]string, error) {
     return flat, nil
 }
 
+// Like LoadFromReader, it except flattens the data structure into a single map,
+// with section names prepended to field names, delimited by a period.
 func LoadFromReaderFlat(r io.Reader) (map[string]string, error) {
     o := new(my_ini)
     conf, err := o.load_from_reader(r)
@@ -84,6 +108,8 @@ func LoadFromReaderFlat(r io.Reader) (map[string]string, error) {
 
 }
 
+// Like LoadFromString, it except flattens the data structure into a single map,
+// with section names prepended to field names, delimited by a period.
 func LoadFromStringFlat(buf string) (map[string]string, error) {
     o := new(my_ini)
     conf, err := o.load_from_reader(strings.NewReader(buf))
@@ -106,15 +132,17 @@ func (o *my_ini) load_from_file(filename string) (map[string]map[string]string, 
 }
 
 func (o *my_ini) load_from_reader(r io.Reader) (map[string]map[string]string, error) {
-    in := bufio.NewReader(r)
     conf := make(map[string]map[string]string)
     cur_sect_name := "default"
 
     cur_sect := make(map[string]string)
     conf[cur_sect_name] = cur_sect
 
-    for line, err := in.ReadString('\n'); err == nil; line, err = in.ReadString('\n') {
-        line = strings.TrimSpace(line)
+    scanner := bufio.NewScanner(r)
+    scanner.Split(bufio.ScanLines)
+    for s := scanner.Scan(); s; s = scanner.Scan() {
+        line := strings.TrimSpace(scanner.Text())
+
         if len(line) == 0 {
             continue // empty line
         }
