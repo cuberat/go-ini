@@ -4,7 +4,7 @@ Package ini provides INI file read functionality in Go.
 
 To get the latest changes
 
-    go get github.com/cuberat/go-ini
+    go get github.com/cuberat/go-ini/ini
 
 ## Getting started
 
@@ -34,3 +34,5 @@ Output:
 ```bash
 map[default:map[foo:bar] db:map[user:myuser password:mypassword]]
 ```
+
+Note that fields that occur before a section is declared are placed into a section called "default".
